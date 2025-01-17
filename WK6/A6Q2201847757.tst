@@ -2,7 +2,8 @@
 load A6Q2201847757.hdl,
 output-file A6Q2201847757.out,
 compare-to A6Q2201847757.cmp,
-output-list a b c d f;
+output-list a%B3.1.3 b%B3.1.3 c%B3.1.3 d%B3.1.3 f%B3.1.3;
+
 
 // Test Case 1: First term (¬a ∧ ¬b ∧ ¬c ∧ ¬d) = 1
 set a 0,

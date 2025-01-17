@@ -8,7 +8,7 @@ CHIP A6Q2201847757 {
     Not(in=c, out=notc);
     Not(in=d, out=notd);
     
-    // Term 1: !a!b!c(!d + d)
+    // Term 1: !a!b!c - this covers both !a!b!c!d and !a!b!cd cases
     And(a=nota, b=notb, out=t1a);
     And(a=t1a, b=notc, out=term1);
     
@@ -38,4 +38,3 @@ CHIP A6Q2201847757 {
     Or(a=or2, b=term4, out=or3);
     Or(a=or3, b=term5, out=f);
 }
-
