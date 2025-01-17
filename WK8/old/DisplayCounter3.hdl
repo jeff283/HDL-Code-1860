@@ -1,0 +1,20 @@
+CHIP DisplayCounter3 {
+    IN inc, reset;
+    OUT a, b, c, d, e, f, g;
+    PARTS:
+    
+    // 4-bit counter to count from 0 to 15
+    Register(in=counterInput, load=load, out=counterValue);
+    Inc16(in=counterValue, out=incrementedValue);
+    
+    // Logic to reset the counter
+    Mux16(a=counterValue, b=false, sel=reset, out=resetValue);
+    Mux16(a=resetValue, b=incrementedValue, sel=inc, out=counterInput);
+    Or(a=inc, b=reset, out=load);
+    
+    // Limit counter to 4 bits by ignoring higher bits
+    And(a=counterValue[4..15], b=false, out=counterValue[4..15]);
+
+    // Decode the 4-bit counter value into 7-segment signals
+    Decoder4To7(in=counterValue[0..3], out=a, b, c, d, e, f, g);
+}
