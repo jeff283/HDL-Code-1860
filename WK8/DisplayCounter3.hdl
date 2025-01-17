@@ -1,0 +1,28 @@
+// File: DisplayCounter3.hdl
+// Purpose: Main counter chip that combines all components
+CHIP DisplayCounter3 {
+    IN inc, reset;
+    OUT a, b, c, d, e, f, g;
+    
+    PARTS:
+    // Store the current counter value
+    Register4(in=newValue, load=true, out=currentValue);
+    
+    // Increment the current value when inc is high
+    Inc16(in[0..3]=currentValue, in[4..15]=false, out[0..3]=incValue);
+    
+    // Choose between incremented value or zero based on reset
+    Mux4(a=incValue, b[0..3]=false, sel=reset, out=newValue);
+    
+    // Convert binary number to 7-segment display format
+    SevenSegmentDecoder(
+        in=currentValue,
+        a=a,
+        b=b,
+        c=c,
+        d=d,
+        e=e,
+        f=f,
+        g=g
+    );
+}

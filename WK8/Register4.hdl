@@ -1,0 +1,13 @@
+// File: Register4.hdl
+// Purpose: A 4-bit register to store our counter value
+CHIP Register4 {
+    IN in[4], load;
+    OUT out[4];
+    
+    PARTS:
+    // Use DFF (D Flip-Flop) for each bit to create storage
+    DFF(in=in[0], out=out[0]);
+    DFF(in=in[1], out=out[1]);
+    DFF(in=in[2], out=out[2]);
+    DFF(in=in[3], out=out[3]);
+}
