@@ -4,75 +4,86 @@
 CHIP SevenSegmentDecoder {
     IN in[4];
     OUT a, b, c, d, e, f, g;
-    
+
     PARTS:
-    // Segment a is on for numbers 0,2,3,5,6,7,8,9
-    Or8Way(
-        in[0]=zero, in[1]=two, in[2]=three, in[3]=five,
-        in[4]=six, in[5]=seven, in[6]=eight, in[7]=nine,
-        out=a
-    );
-    
-    // Segment b is on for numbers 0,1,2,3,4,7,8,9
-    Or8Way(
-        in[0]=zero, in[1]=one, in[2]=two, in[3]=three,
-        in[4]=four, in[5]=seven, in[6]=eight, in[7]=nine,
-        out=b
-    );
-    
-    // Segment c is on for numbers 0,1,3,4,5,6,7,8,9
-    Or8Way(
-        in[0]=zero, in[1]=one, in[2]=three, in[3]=four,
-        in[4]=five, in[5]=six, in[6]=seven, in[7]=eight,
-        out=c
-    );
-    
-    // Segment d is on for numbers 0,2,3,5,6,8,9
-    Or8Way(
-        in[0]=zero, in[1]=two, in[2]=three, in[3]=five,
-        in[4]=six, in[5]=eight, in[6]=nine, in[7]=false,
-        out=d
-    );
-    
-    // Segment e is on for numbers 0,2,6,8
-    Or8Way(
-        in[0]=zero, in[1]=two, in[2]=six, in[3]=eight,
-        in[4..7]=false,
-        out=e
-    );
-    
-    // Segment f is on for numbers 0,4,5,6,8,9
-    Or8Way(
-        in[0]=zero, in[1]=four, in[2]=five, in[3]=six,
-        in[4]=eight, in[5]=nine, in[6..7]=false,
-        out=f
-    );
-    
-    // Segment g is on for numbers 2,3,4,5,6,8,9
-    Or8Way(
-        in[0]=two, in[1]=three, in[2]=four, in[3]=five,
-        in[4]=six, in[5]=eight, in[6]=nine, in[7]=false,
-        out=g
-    );
-    
-    // Number decoder - converts binary input to individual number signals
+    // Decode binary input to individual number signals
     DMux8Way(in=true, sel=in[0..2],
         a=n0, b=n1, c=n2, d=n3,
         e=n4, f=n5, g=n6, h=n7);
-        
+
     DMux8Way(in=true, sel=in[1..3],
         a=n8, b=n9, c=n10, d=n11,
         e=n12, f=n13, g=n14, h=n15);
-    
+
+    // Invert in[3]
+    Not(in=in[3], out=notIn3);
+
     // Map decoded numbers to their respective variables
-    And(a=n0, b=!in[3], out=zero);
-    And(a=n1, b=!in[3], out=one);
-    And(a=n2, b=!in[3], out=two);
-    And(a=n3, b=!in[3], out=three);
-    And(a=n4, b=!in[3], out=four);
-    And(a=n5, b=!in[3], out=five);
-    And(a=n6, b=!in[3], out=six);
-    And(a=n7, b=!in[3], out=seven);
-    And(a=n8, b=!in[3], out=eight);
-    And(a=n9, b=!in[3], out=nine);
+    And(a=n0, b=notIn3, out=zero);
+    And(a=n1, b=notIn3, out=one);
+    And(a=n2, b=notIn3, out=two);
+    And(a=n3, b=notIn3, out=three);
+    And(a=n4, b=notIn3, out=four);
+    And(a=n5, b=notIn3, out=five);
+    And(a=n6, b=notIn3, out=six);
+    And(a=n7, b=notIn3, out=seven);
+    And(a=n8, b=notIn3, out=eight);
+    And(a=n9, b=notIn3, out=nine);
+
+    // Define segments
+    // Segment a: 0, 2, 3, 5, 6, 7, 8, 9
+    Or(a=zero, b=two, out=segmentA1);
+    Or(a=segmentA1, b=three, out=segmentA2);
+    Or(a=segmentA2, b=five, out=segmentA3);
+    Or(a=segmentA3, b=six, out=segmentA4);
+    Or(a=segmentA4, b=seven, out=segmentA5);
+    Or(a=segmentA5, b=eight, out=segmentA6);
+    Or(a=segmentA6, b=nine, out=a);
+
+    // Segment b: 0, 1, 2, 3, 4, 7, 8, 9
+    Or(a=zero, b=one, out=segmentB1);
+    Or(a=segmentB1, b=two, out=segmentB2);
+    Or(a=segmentB2, b=three, out=segmentB3);
+    Or(a=segmentB3, b=four, out=segmentB4);
+    Or(a=segmentB4, b=seven, out=segmentB5);
+    Or(a=segmentB5, b=eight, out=segmentB6);
+    Or(a=segmentB6, b=nine, out=b);
+
+    // Segment c: 0, 1, 3, 4, 5, 6, 7, 8, 9
+    Or(a=zero, b=one, out=segmentC1);
+    Or(a=segmentC1, b=three, out=segmentC2);
+    Or(a=segmentC2, b=four, out=segmentC3);
+    Or(a=segmentC3, b=five, out=segmentC4);
+    Or(a=segmentC4, b=six, out=segmentC5);
+    Or(a=segmentC5, b=seven, out=segmentC6);
+    Or(a=segmentC6, b=eight, out=segmentC7);
+    Or(a=segmentC7, b=nine, out=c);
+
+    // Segment d: 0, 2, 3, 5, 6, 8, 9
+    Or(a=zero, b=two, out=segmentD1);
+    Or(a=segmentD1, b=three, out=segmentD2);
+    Or(a=segmentD2, b=five, out=segmentD3);
+    Or(a=segmentD3, b=six, out=segmentD4);
+    Or(a=segmentD4, b=eight, out=segmentD5);
+    Or(a=segmentD5, b=nine, out=d);
+
+    // Segment e: 0, 2, 6, 8
+    Or(a=zero, b=two, out=segmentE1);
+    Or(a=segmentE1, b=six, out=segmentE2);
+    Or(a=segmentE2, b=eight, out=e);
+
+    // Segment f: 0, 4, 5, 6, 8, 9
+    Or(a=zero, b=four, out=segmentF1);
+    Or(a=segmentF1, b=five, out=segmentF2);
+    Or(a=segmentF2, b=six, out=segmentF3);
+    Or(a=segmentF3, b=eight, out=segmentF4);
+    Or(a=segmentF4, b=nine, out=f);
+
+    // Segment g: 2, 3, 4, 5, 6, 8, 9
+    Or(a=two, b=three, out=segmentG1);
+    Or(a=segmentG1, b=four, out=segmentG2);
+    Or(a=segmentG2, b=five, out=segmentG3);
+    Or(a=segmentG3, b=six, out=segmentG4);
+    Or(a=segmentG4, b=eight, out=segmentG5);
+    Or(a=segmentG5, b=nine, out=g);
 }

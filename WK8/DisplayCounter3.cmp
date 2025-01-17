@@ -1,0 +1,5 @@
+| a | b | c | d | e | f | g |
+| 1 | 1 | 1 | 1 | 1 | 1 | 0 | // After reset, showing 0
+| 0 | 1 | 1 | 0 | 0 | 0 | 0 | // Increment to 1
+| 1 | 1 | 0 | 1 | 1 | 0 | 1 | // Increment to 2
+| 1 | 1 | 1 | 1 | 0 | 0 | 1 | // Increment to 3
