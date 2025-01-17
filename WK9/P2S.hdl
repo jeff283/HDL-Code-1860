@@ -1,0 +1,17 @@
+CHIP P2S {
+    IN indata[4], enable, load;
+    OUT sout, complete;
+    PARTS:
+    // Register to store input data
+    Register4(in=indata, load=load, out=stored);
+    
+    // 2-bit counter to keep track of which bit we're sending (0-3)
+    PC(in=counter, load=false, inc=enable, reset=complete, out=counter);
+    
+    // Multiplexer to select which bit to output based on counter
+    Mux4Way16(a=stored[0], b=stored[1], c=stored[2], d=stored[3],
+              sel=counter[0..1], out=sout);
+              
+    // Complete signal when counter reaches 3 (11 in binary)
+    And(a=counter[0], b=counter[1], out=complete);
+}

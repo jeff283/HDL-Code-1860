@@ -1,0 +1,41 @@
+CHIP A6Q2201847757 {
+    IN a, b, c, d;
+    OUT f;
+    PARTS:
+    // Generate common NOT terms
+    Not(in=a, out=nota);
+    Not(in=b, out=notb);
+    Not(in=c, out=notc);
+    Not(in=d, out=notd);
+    
+    // Term 1: !a!b!c(!d + d)
+    And(a=nota, b=notb, out=t1a);
+    And(a=t1a, b=notc, out=term1);
+    
+    // Term 2: !ab!c!d
+    And(a=nota, b=b, out=t2a);
+    And(a=t2a, b=notc, out=t2b);
+    And(a=t2b, b=notd, out=term2);
+    
+    // Term 3: !abcd
+    And(a=nota, b=b, out=t3a);
+    And(a=t3a, b=c, out=t3b);
+    And(a=t3b, b=d, out=term3);
+    
+    // Term 4: a!b!c!d
+    And(a=a, b=notb, out=t4a);
+    And(a=t4a, b=notc, out=t4b);
+    And(a=t4b, b=notd, out=term4);
+    
+    // Term 5: abcd
+    And(a=a, b=b, out=t5a);
+    And(a=t5a, b=c, out=t5b);
+    And(a=t5b, b=d, out=term5);
+    
+    // Combine all terms
+    Or(a=term1, b=term2, out=or1);
+    Or(a=or1, b=term3, out=or2);
+    Or(a=or2, b=term4, out=or3);
+    Or(a=or3, b=term5, out=f);
+}
+
