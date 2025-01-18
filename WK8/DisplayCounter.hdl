@@ -1,10 +1,7 @@
 /**
  * 4-bit counter (0-15) with 7-segment display output.
- * Inputs:
- *   - inc: when 1, increments the counter
- *   - reset: when 1, sets counter to 0
- * Outputs:
- *   - a,b,c,d,e,f,g: 7-segment display control signals
+ * Counter increments when inc is 1, and resets when reset is 1.
+ * Output is displayed on a seven-segment display.
  */
 
 CHIP DisplayCounter {
@@ -12,32 +9,46 @@ CHIP DisplayCounter {
     OUT a,b,c,d,e,f,g;
     
     PARTS:
-    // Counter implementation
-    // We'll use a 4-bit register to store the count
-    Register(in=newValue, load=true, out=currentValue, out[0..3]=displayInput);
+    // 4-bit register to store current count
+    // We need to capture the individual bits separately
+    Register4Bit(in=nextValue, load=true, out=currentValue, 
+                out[0]=bit0, out[1]=bit1, out[2]=bit2, out[3]=bit3);
     
-    // Create the next value by either incrementing or resetting
-    Inc16(in[0..3]=currentValue, in[4..15]=false, out[0..3]=incValue);
-    Mux4(a=incValue, b[0..3]=false, sel=reset, out=newValue);
+    // Increment circuit
+    Inc4Bit(in=currentValue, out=incValue);
     
-    // Only increment when inc is 1 and we haven't reached 15 (1111)
-    // Check if current value is 15
-    And(a=currentValue[0], b=currentValue[1], out=temp1);
-    And(a=currentValue[2], b=currentValue[3], out=temp2);
+    // Create a zero value for reset
+    Not(in=true, out=zero);
+    
+    // First multiplexer: choose between incremented value and zero (reset)
+    Mux4(
+        a=incValue,
+        b[0]=zero,
+        b[1]=zero,
+        b[2]=zero,
+        b[3]=zero,
+        sel=reset,
+        out=resetOrInc
+    );
+    
+    // Second multiplexer: choose between current value and new value
+    Mux4(
+        a=currentValue,
+        b=resetOrInc,
+        sel=shouldUpdate,
+        out=nextValue
+    );
+    
+    // Control logic for updating
+    // Only update if either reset is high or inc is high and not at max value (15)
+    // We use the separately captured bits to check for value 15 (1111)
+    And(a=bit0, b=bit1, out=temp1);
+    And(a=bit2, b=bit3, out=temp2);
     And(a=temp1, b=temp2, out=is15);
     Not(in=is15, out=notMax);
     And(a=inc, b=notMax, out=shouldInc);
+    Or(a=reset, b=shouldInc, out=shouldUpdate);
     
-    // Decode the 4-bit value to 7-segment display outputs
-    // We'll use a separate decoder chip that was created in Week 7
-    SevenSegDecoder(
-        in=displayInput,
-        a=a,
-        b=b,
-        c=c,
-        d=d,
-        e=e,
-        f=f,
-        g=g
-    );
+    // Connect current value to seven segment decoder
+    SevenSegDecoder(in=currentValue, a=a, b=b, c=c, d=d, e=e, f=f, g=g);
 }

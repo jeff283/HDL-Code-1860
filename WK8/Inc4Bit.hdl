@@ -1,0 +1,16 @@
+/**
+ * 4-bit incrementer
+ * Adds 1 to a 4-bit number
+ */
+
+CHIP Inc4Bit {
+    IN in[4];
+    OUT out[4];
+    
+    PARTS:
+    // Half adders in series to implement increment
+    HalfAdder(a=in[0], b=true, sum=out[0], carry=carry0);
+    HalfAdder(a=in[1], b=carry0, sum=out[1], carry=carry1);
+    HalfAdder(a=in[2], b=carry1, sum=out[2], carry=carry2);
+    HalfAdder(a=in[3], b=carry2, sum=out[3], carry=carry3);
+}

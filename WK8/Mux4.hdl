@@ -1,0 +1,27 @@
+/**
+ * 4-bit multiplexer
+ * Selects between two 4-bit inputs based on sel
+ * When sel=0, outputs a
+ * When sel=1, outputs b
+ */
+
+CHIP Mux4 {
+    IN a[4], b[4], sel;
+    OUT out[4];
+    
+    PARTS:
+    // For each bit, we use a basic multiplexer to select
+    // between the corresponding bits of a and b
+    
+    // Bit 0 selection
+    Mux(a=a[0], b=b[0], sel=sel, out=out[0]);
+    
+    // Bit 1 selection
+    Mux(a=a[1], b=b[1], sel=sel, out=out[1]);
+    
+    // Bit 2 selection
+    Mux(a=a[2], b=b[2], sel=sel, out=out[2]);
+    
+    // Bit 3 selection
+    Mux(a=a[3], b=b[3], sel=sel, out=out[3]);
+}

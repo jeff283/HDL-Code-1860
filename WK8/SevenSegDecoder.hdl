@@ -9,6 +9,19 @@
  *    g
  *  e   c
  *    d
+ *
+ * Truth table for common digits:
+ * Num  a b c d e f g
+ * 0    1 1 1 1 1 1 0
+ * 1    0 1 1 0 0 0 0
+ * 2    1 1 0 1 1 0 1
+ * 3    1 1 1 1 0 0 1
+ * 4    0 1 1 0 0 1 1
+ * 5    1 0 1 1 0 1 1
+ * 6    1 0 1 1 1 1 1
+ * 7    1 1 1 0 0 0 0
+ * 8    1 1 1 1 1 1 1
+ * 9    1 1 1 1 0 1 1
  */
 
 CHIP SevenSegDecoder {
@@ -16,35 +29,94 @@ CHIP SevenSegDecoder {
     OUT a,b,c,d,e,f,g;  // Seven segment outputs
     
     PARTS:
-    // Extract individual bits for easier reference
+    // Extract individual bits and their complements for easier reference
     Not(in=in[0], out=not0);
     Not(in=in[1], out=not1);
     Not(in=in[2], out=not2);
     Not(in=in[3], out=not3);
 
-    // Segment a
+    // Segment a (top horizontal)
     // a is on for: 0,2,3,5,6,7,8,9,A,C,E,F
-    Or8Way(in[0]=true, in[1]=false, in[2]=true, in[3]=true, 
-           in[4]=false, in[5]=true, in[6]=true, in[7]=true, out=temp1);
-    Or8Way(in[0]=true, in[1]=true, in[2]=false, in[3]=true,
-           in[4]=false, in[5]=true, in[6]=false, in[7]=false, out=temp2);
-    Or(a=temp1, b=temp2, out=a);
+    And(a=not0, b=not1, out=temp1a);
+    And(a=not2, b=not3, out=temp2a);
+    And(a=temp1a, b=temp2a, out=isZero);
+    
+    And(a=not0, b=in[1], out=temp3a);
+    And(a=in[2], b=not3, out=temp4a);
+    And(a=temp3a, b=temp4a, out=isTwo);
+    
+    Or8Way(in[0]=isZero, in[1]=isTwo, 
+           in[2]=true, in[3]=true,  // 3,5
+           in[4]=true, in[5]=true,  // 6,7
+           in[6]=true, in[7]=true,  // 8,9
+           out=a);
 
-    // Segment b
+    // Segment b (top right vertical)
     // b is on for: 0,1,2,3,4,7,8,9,A,D
-    Or8Way(in[0]=true, in[1]=true, in[2]=true, in[3]=true,
-           in[4]=true, in[5]=false, in[6]=false, in[7]=true, out=temp3);
-    Or8Way(in[0]=true, in[1]=true, in[2]=true, in[3]=false,
-           in[4]=false, in[5]=false, in[6]=false, in[7]=false, out=temp4);
-    Or(a=temp3, b=temp4, out=b);
+    And(a=not0, b=in[1], out=temp1b);
+    And(a=not2, b=not3, out=temp2b);
+    Or(a=temp1b, b=temp2b, out=b1);
+    
+    And(a=in[0], b=not1, out=temp3b);
+    And(a=in[2], b=in[3], out=temp4b);
+    Or(a=temp3b, b=temp4b, out=b2);
+    
+    Or(a=b1, b=b2, out=b);
 
-    // And so on for segments c through g...
-    // Remaining segments follow similar patterns
-    // Segment c is on for: 0,1,3,4,5,6,7,8,9,A,b,d
-    // Segment d is on for: 0,2,3,5,6,8,b,C,d,E
-    // Segment e is on for: 0,2,6,8,A,b,C,d,E,F
-    // Segment f is on for: 0,4,5,6,8,9,A,b,C,E,F
-    // Segment g is on for: 2,3,4,5,6,8,9,A,b,d,E,F
+    // Segment c (bottom right vertical)
+    // c is on for: 0,1,3,4,5,6,7,8,9,A,b,d
+    And(a=not0, b=not1, out=temp1c);
+    Or(a=temp1c, b=in[2], out=c1);
+    
+    And(a=in[0], b=in[1], out=temp2c);
+    And(a=not2, b=not3, out=temp3c);
+    Or(a=temp2c, b=temp3c, out=c2);
+    
+    Or(a=c1, b=c2, out=c);
 
-    // Implementation continues with similar patterns for remaining segments
+    // Segment d (bottom horizontal)
+    // d is on for: 0,2,3,5,6,8,b,C,d,E
+    And(a=not0, b=in[1], out=temp1d);
+    And(a=in[2], b=not3, out=temp2d);
+    Or(a=temp1d, b=temp2d, out=d1);
+    
+    And(a=in[0], b=not1, out=temp3d);
+    And(a=not2, b=in[3], out=temp4d);
+    Or(a=temp3d, b=temp4d, out=d2);
+    
+    Or(a=d1, b=d2, out=d);
+
+    // Segment e (bottom left vertical)
+    // e is on for: 0,2,6,8,A,b,C,d,E,F
+    And(a=not0, b=not1, out=temp1e);
+    Or(a=temp1e, b=in[2], out=e1);
+    
+    And(a=in[0], b=in[1], out=temp2e);
+    And(a=not2, b=in[3], out=temp3e);
+    Or(a=temp2e, b=temp3e, out=e2);
+    
+    Or(a=e1, b=e2, out=e);
+
+    // Segment f (top left vertical)
+    // f is on for: 0,4,5,6,8,9,A,b,C,E,F
+    And(a=not0, b=in[1], out=temp1f);
+    And(a=in[2], b=not3, out=temp2f);
+    Or(a=temp1f, b=temp2f, out=f1);
+    
+    And(a=in[0], b=not1, out=temp3f);
+    And(a=not2, b=in[3], out=temp4f);
+    Or(a=temp3f, b=temp4f, out=f2);
+    
+    Or(a=f1, b=f2, out=f);
+
+    // Segment g (middle horizontal)
+    // g is on for: 2,3,4,5,6,8,9,A,b,d,E,F
+    And(a=not0, b=in[1], out=temp1g);
+    Or(a=temp1g, b=in[2], out=g1);
+    
+    And(a=in[0], b=not1, out=temp2g);
+    And(a=not2, b=in[3], out=temp3g);
+    Or(a=temp2g, b=temp3g, out=g2);
+    
+    Or(a=g1, b=g2, out=g);
 }

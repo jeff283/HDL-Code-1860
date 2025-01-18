@@ -1,0 +1,32 @@
+/**
+ * 4-bit register
+ * Stores 4 bits of data with load control
+ * When load=1, loads new value from input
+ * When load=0, maintains current value
+ */
+
+CHIP Register4Bit {
+    IN in[4], load;
+    OUT out[4];
+    
+    PARTS:
+    // Each bit uses a DFF (D Flip-Flop) for storage
+    // The Mux selects between keeping the current value (load=0)
+    // or loading the new value (load=1)
+    
+    // Bit 0
+    Mux(a=dff0out, b=in[0], sel=load, out=mux0out);
+    DFF(in=mux0out, out=dff0out, out=out[0]);
+    
+    // Bit 1
+    Mux(a=dff1out, b=in[1], sel=load, out=mux1out);
+    DFF(in=mux1out, out=dff1out, out=out[1]);
+    
+    // Bit 2
+    Mux(a=dff2out, b=in[2], sel=load, out=mux2out);
+    DFF(in=mux2out, out=dff2out, out=out[2]);
+    
+    // Bit 3
+    Mux(a=dff3out, b=in[3], sel=load, out=mux3out);
+    DFF(in=mux3out, out=dff3out, out=out[3]);
+}
