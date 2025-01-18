@@ -1,0 +1,43 @@
+/**
+ * 4-bit counter (0-15) with 7-segment display output.
+ * Inputs:
+ *   - inc: when 1, increments the counter
+ *   - reset: when 1, sets counter to 0
+ * Outputs:
+ *   - a,b,c,d,e,f,g: 7-segment display control signals
+ */
+
+CHIP DisplayCounter {
+    IN inc, reset;
+    OUT a,b,c,d,e,f,g;
+    
+    PARTS:
+    // Counter implementation
+    // We'll use a 4-bit register to store the count
+    Register(in=newValue, load=true, out=currentValue, out[0..3]=displayInput);
+    
+    // Create the next value by either incrementing or resetting
+    Inc16(in[0..3]=currentValue, in[4..15]=false, out[0..3]=incValue);
+    Mux4(a=incValue, b[0..3]=false, sel=reset, out=newValue);
+    
+    // Only increment when inc is 1 and we haven't reached 15 (1111)
+    // Check if current value is 15
+    And(a=currentValue[0], b=currentValue[1], out=temp1);
+    And(a=currentValue[2], b=currentValue[3], out=temp2);
+    And(a=temp1, b=temp2, out=is15);
+    Not(in=is15, out=notMax);
+    And(a=inc, b=notMax, out=shouldInc);
+    
+    // Decode the 4-bit value to 7-segment display outputs
+    // We'll use a separate decoder chip that was created in Week 7
+    SevenSegDecoder(
+        in=displayInput,
+        a=a,
+        b=b,
+        c=c,
+        d=d,
+        e=e,
+        f=f,
+        g=g
+    );
+}

@@ -1,17 +1,51 @@
+// This file implements a 4-bit Parallel to Serial converter
+// It requires implementation of a DFF (Data Flip-Flop) which is built into nand2tetris
+
 CHIP P2S {
     IN indata[4], enable, load;
     OUT sout, complete;
+    
     PARTS:
-    // Register to store input data
-    Register4(in=indata, load=load, out=stored);
+    // Create a 4-bit register to store the input data
+    // We'll use 4 DFFs to store each bit independently
+    DFF(in=loadbit0, out=stored0);
+    DFF(in=loadbit1, out=stored1);
+    DFF(in=loadbit2, out=stored2);
+    DFF(in=loadbit3, out=stored3);
     
-    // 2-bit counter to keep track of which bit we're sending (0-3)
-    PC(in=counter, load=false, inc=enable, reset=complete, out=counter);
+    // Multiplexers to handle loading new data vs keeping existing data
+    Mux(a=stored0, b=indata[0], sel=load, out=loadbit0);
+    Mux(a=stored1, b=indata[1], sel=load, out=loadbit1);
+    Mux(a=stored2, b=indata[2], sel=load, out=loadbit2);
+    Mux(a=stored3, b=indata[3], sel=load, out=loadbit3);
     
-    // Multiplexer to select which bit to output based on counter
-    Mux4Way16(a=stored[0], b=stored[1], c=stored[2], d=stored[3],
-              sel=counter[0..1], out=sout);
-              
-    // Complete signal when counter reaches 3 (11 in binary)
-    And(a=counter[0], b=counter[1], out=complete);
+    // Counter to keep track of which bit we're outputting (0-3)
+    // We need 2 bits to count from 0 to 3
+    DFF(in=nextcount0, out=count0);
+    DFF(in=nextcount1, out=count1);
+    
+    // Counter logic - increment when enabled
+    And(a=enable, b=true, out=shouldcount);
+    Mux(a=count0, b=false, sel=load, out=resetcount0);
+    Not(in=resetcount0, out=notcount0);
+    And(a=shouldcount, b=notcount0, out=nextcount0);
+    
+    And(a=shouldcount, b=count0, out=carrybit);
+    Xor(a=count1, b=carrybit, out=tempcount1);
+    Mux(a=tempcount1, b=false, sel=load, out=nextcount1);
+    
+    // Multiplexer to select which stored bit to output based on counter
+    Mux4Way16(
+        a[0]=stored0, a[1..15]=false,
+        b[0]=stored1, b[1..15]=false,
+        c[0]=stored2, c[1..15]=false,
+        d[0]=stored3, d[1..15]=false,
+        sel[0]=count0,
+        sel[1]=count1,
+        out[0]=sout,
+        out[1..15]=false
+    );
+    
+    // Complete signal - true when counter reaches 3 (11 in binary)
+    And(a=count0, b=count1, out=complete);
 }
