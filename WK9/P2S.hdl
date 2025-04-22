@@ -1,51 +1,40 @@
-// This file implements a 4-bit Parallel to Serial converter
-// It requires implementation of a DFF (Data Flip-Flop) which is built into nand2tetris
-
 CHIP P2S {
     IN indata[4], enable, load;
     OUT sout, complete;
-    
+
     PARTS:
-    // Create a 4-bit register to store the input data
-    // We'll use 4 DFFs to store each bit independently
-    DFF(in=loadbit0, out=stored0);
-    DFF(in=loadbit1, out=stored1);
-    DFF(in=loadbit2, out=stored2);
-    DFF(in=loadbit3, out=stored3);
-    
-    // Multiplexers to handle loading new data vs keeping existing data
-    Mux(a=stored0, b=indata[0], sel=load, out=loadbit0);
-    Mux(a=stored1, b=indata[1], sel=load, out=loadbit1);
-    Mux(a=stored2, b=indata[2], sel=load, out=loadbit2);
-    Mux(a=stored3, b=indata[3], sel=load, out=loadbit3);
-    
-    // Counter to keep track of which bit we're outputting (0-3)
-    // We need 2 bits to count from 0 to 3
-    DFF(in=nextcount0, out=count0);
-    DFF(in=nextcount1, out=count1);
-    
-    // Counter logic - increment when enabled
-    And(a=enable, b=true, out=shouldcount);
-    Mux(a=count0, b=false, sel=load, out=resetcount0);
-    Not(in=resetcount0, out=notcount0);
-    And(a=shouldcount, b=notcount0, out=nextcount0);
-    
-    And(a=shouldcount, b=count0, out=carrybit);
-    Xor(a=count1, b=carrybit, out=tempcount1);
-    Mux(a=tempcount1, b=false, sel=load, out=nextcount1);
-    
-    // Multiplexer to select which stored bit to output based on counter
-    Mux4Way16(
-        a[0]=stored0, a[1..15]=false,
-        b[0]=stored1, b[1..15]=false,
-        c[0]=stored2, c[1..15]=false,
-        d[0]=stored3, d[1..15]=false,
-        sel[0]=count0,
-        sel[1]=count1,
-        out[0]=sout,
-        out[1..15]=false
-    );
-    
-    // Complete signal - true when counter reaches 3 (11 in binary)
-    And(a=count0, b=count1, out=complete);
+    // Flip-flops to store the 4-bit input data
+    DFF(in=bit0Load, out=stored0);
+    DFF(in=bit1Load, out=stored1);
+    DFF(in=bit2Load, out=stored2);
+    DFF(in=bit3Load, out=stored3);
+
+    // Multiplexers for loading data
+    Mux(a=stored0, b=indata[0], sel=load, out=bit0Load);
+    Mux(a=stored1, b=indata[1], sel=load, out=bit1Load);
+    Mux(a=stored2, b=indata[2], sel=load, out=bit2Load);
+    Mux(a=stored3, b=indata[3], sel=load, out=bit3Load);
+
+    // 2-bit counter for selecting which bit to output
+    DFF(in=nextCount0, out=count0);
+    DFF(in=nextCount1, out=count1);
+
+    // Logic for counter increment
+    And(a=enable, b=true, out=countEnable);
+    Xor(a=count0, b=enable, out=nextCount0);
+    And(a=count0, b=enable, out=carry);
+    Xor(a=count1, b=carry, out=nextCount1);
+
+    // Multiplexer for output selection based on counter
+    Mux4Way16(a[0]=stored0, b[0]=stored1, c[0]=stored2, d[0]=stored3,
+              sel[0]=count0, sel[1]=count1, out[0]=sout);
+
+    // Logic for the complete signal
+    And(a=count0, b=count1, out=completeCycle);
+    And(a=completeCycle, b=enable, out=complete);
+
+    // Reset counter when loading new data
+    Or(a=complete, b=load, out=resetSignal);
+    Mux(a=false, b=nextCount0, sel=resetSignal, out=nextCount0);
+    Mux(a=false, b=nextCount1, sel=resetSignal, out=nextCount1);
 }
